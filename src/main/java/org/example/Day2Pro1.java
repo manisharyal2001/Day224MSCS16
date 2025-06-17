@@ -3,106 +3,79 @@ package org.example;
 import java.util.Scanner;
 
 class Book {
-    private final String title;
-    private final String author;
-    private final int year;
-    private boolean available;
+    String title;
+    String author;
+    int year;
+    boolean available;
 
-    public Book(String title, String author, int year) {
+    Book(String title, String author, int year) {
         this.title = title;
         this.author = author;
         this.year = year;
         this.available = true;
     }
 
-    public void checkout() {
+    void checkout() {
         if (available) {
             available = false;
-            System.out.println("Book checked out: " + title);
+            System.out.println("Checked out: " + title);
         } else {
-            System.out.println("Book unavailable: " + title);
+            System.out.println("Already taken: " + title);
         }
     }
 
-    public void returnBook() {
+    void returnBook() {
         available = true;
-        System.out.println("Book returned: " + title);
+        System.out.println("Returned: " + title);
     }
 
-    public void displayInfo() {
-        System.out.println("Title: " + title);
-        System.out.println("Author: " + author);
-        System.out.println("Year: " + year);
-        System.out.println("Available: " + (available ? "Yes" : "No"));
-        System.out.println();
-    }
-
-    public String getTitle() {
-        return title;
+    void display() {
+        System.out.println(title + " by " + author + " (" + year + ") - " + (available ? "Available" : "Not Available"));
     }
 }
-
-class FictionBook extends Book {
-    public FictionBook(String title, String author, int year) {
-        super(title, author, year);
-    }
-}
-
-class NonFictionBook extends Book {
-    public NonFictionBook(String title, String author, int year) {
-        super(title, author, year);
-    }
-}
-
 
 public class Day2Pro1 {
     public static void main(String[] args) {
         Scanner sc = new Scanner(System.in);
 
-        FictionBook novel = new FictionBook("The Alchemist", "Paulo Coelho", 2001);
-        NonFictionBook textbook = new NonFictionBook("Let Us C", "Yashavant Kanetkar", 2011);
+        Book book1 = new Book("The Alchemist", "Paulo Coelho", 2001);
+        Book book2 = new Book("Let Us C", "Yashavant Kanetkar", 2011);
 
         while (true) {
-            System.out.println("\nChoose an option:\n1 - Take a book\n2 - Return a book\n3 - View all books\n0 - Exit");
+            System.out.println("\n1. Take Book");
+            System.out.println("2. Return Book");
+            System.out.println("3. View Books");
+            System.out.println("0. Exit");
+            System.out.print("Enter choice: ");
             int choice = sc.nextInt();
+            sc.nextLine(); // consume leftover newline
 
-            switch (choice) {
-                case 1:
-                    System.out.println("Enter book title to checkout:");
-                    sc.nextLine();  // consume leftover newline
-                    String takeTitle = sc.nextLine();
-                    if (takeTitle.equalsIgnoreCase(novel.getTitle())) {
-                        novel.checkout();
-                    } else if (takeTitle.equalsIgnoreCase(textbook.getTitle())) {
-                        textbook.checkout();
-                    } else {
-                        System.out.println("Book not found.");
-                    }
-                    break;
-                case 2:
-                    System.out.println("Enter book title to return:");
-                    sc.nextLine();
-                    String returnTitle = sc.nextLine();
-                    if (returnTitle.equalsIgnoreCase(novel.getTitle())) {
-                        novel.returnBook();
-                    } else if (returnTitle.equalsIgnoreCase(textbook.getTitle())) {
-                        textbook.returnBook();
-                    } else {
-                        System.out.println("Book not found.");
-                    }
-                    break;
-                case 3:
-                    System.out.println("Available Books:");
-                    novel.displayInfo();
-                    textbook.displayInfo();
-                    break;
-                case 0:
-                    System.out.println("Exiting...");
-                    sc.close();
-                    return;
-                default:
-                    System.out.println("Invalid option.");
+            if (choice == 0) {
+                System.out.println("Exiting...");
+                break;
+            }
+
+            if (choice == 1 || choice == 2) {
+                System.out.print("Enter book title: ");
+                String title = sc.nextLine();
+
+                if (title.equalsIgnoreCase(book1.title)) {
+                    if (choice == 1) book1.checkout();
+                    else book1.returnBook();
+                } else if (title.equalsIgnoreCase(book2.title)) {
+                    if (choice == 1) book2.checkout();
+                    else book2.returnBook();
+                } else {
+                    System.out.println("Book not found.");
+                }
+            } else if (choice == 3) {
+                book1.display();
+                book2.display();
+            } else {
+                System.out.println("Invalid choice.");
             }
         }
+
+        sc.close();
     }
 }
