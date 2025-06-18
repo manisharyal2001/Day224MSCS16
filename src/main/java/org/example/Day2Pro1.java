@@ -1,45 +1,22 @@
 package org.example;
 
+import com.mongodb.client.*;
+import org.bson.Document;
+
 import java.util.Scanner;
-
-class Book {
-    String title;
-    String author;
-    int year;
-    boolean available;
-
-    Book(String title, String author, int year) {
-        this.title = title;
-        this.author = author;
-        this.year = year;
-        this.available = true;
-    }
-
-    void checkout() {
-        if (available) {
-            available = false;
-            System.out.println("Checked out: " + title);
-        } else {
-            System.out.println("Already taken: " + title);
-        }
-    }
-
-    void returnBook() {
-        available = true;
-        System.out.println("Returned: " + title);
-    }
-
-    void display() {
-        System.out.println(title + " by " + author + " (" + year + ") - " + (available ? "Available" : "Not Available"));
-    }
-}
 
 public class Day2Pro1 {
     public static void main(String[] args) {
+        // Connect to MongoDB
+        MongoClient mongoClient = MongoClients.create("mongodb://localhost:27017/");
+        MongoDatabase database = mongoClient.getDatabase("BookStore");
+        MongoCollection<Document> collection = database.getCollection("Library");
+
         Scanner sc = new Scanner(System.in);
 
-        Book book1 = new Book("The Alchemist", "Paulo Coelho", 2001);
-        Book book2 = new Book("Let Us C", "Yashavant Kanetkar", 2011);
+        // Two sample books to insert
+        insertBookIfNotExists(collection, "The Alchemist", "Paulo Coelho", 2001);
+        insertBookIfNotExists(collection, "Let Us C", "Yashavant Kanetkar", 2011);
 
         while (true) {
             System.out.println("\n1. Take Book");
@@ -48,7 +25,7 @@ public class Day2Pro1 {
             System.out.println("0. Exit");
             System.out.print("Enter choice: ");
             int choice = sc.nextInt();
-            sc.nextLine(); // consume leftover newline
+            sc.nextLine(); // consume newline
 
             if (choice == 0) {
                 System.out.println("Exiting...");
@@ -59,23 +36,45 @@ public class Day2Pro1 {
                 System.out.print("Enter book title: ");
                 String title = sc.nextLine();
 
-                if (title.equalsIgnoreCase(book1.title)) {
-                    if (choice == 1) book1.checkout();
-                    else book1.returnBook();
-                } else if (title.equalsIgnoreCase(book2.title)) {
-                    if (choice == 1) book2.checkout();
-                    else book2.returnBook();
+                Document query = new Document("title", title);
+                Document book = collection.find(query).first();
+
+                if (book != null) {
+                    boolean available = book.getBoolean("available");
+                    if (choice == 1 && available) {
+                        collection.updateOne(query, new Document("$set", new Document("available", false)));
+                        System.out.println("Checked out: " + title);
+                    } else if (choice == 2) {
+                        collection.updateOne(query, new Document("$set", new Document("available", true)));
+                        System.out.println("Returned: " + title);
+                    } else {
+                        System.out.println("Book already taken.");
+                    }
                 } else {
                     System.out.println("Book not found.");
                 }
             } else if (choice == 3) {
-                book1.display();
-                book2.display();
+                for (Document doc : collection.find()) {
+                    System.out.println(doc.getString("title") + " by " + doc.getString("author") +
+                            " (" + doc.getInteger("year") + ") - " +
+                            (doc.getBoolean("available") ? "Available" : "Not Available"));
+                }
             } else {
                 System.out.println("Invalid choice.");
             }
         }
 
         sc.close();
+        mongoClient.close();
+    }
+
+    static void insertBookIfNotExists(MongoCollection<Document> collection, String title, String author, int year) {
+        if (collection.find(new Document("title", title)).first() == null) {
+            Document book = new Document("title", title)
+                    .append("author", author)
+                    .append("year", year)
+                    .append("available", true);
+            collection.insertOne(book);
+        }
     }
 }
